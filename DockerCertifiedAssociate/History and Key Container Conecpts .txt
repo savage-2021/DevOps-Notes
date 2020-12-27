@@ -1,0 +1,82 @@
+Modern Infrastructures and Applications with Docker
+
+History of Applications:
+    - Monolithic applciatinos are such that all components are combined into a seingle program, and runs on the same platform
+    - Not designed with reusibility in mind, or any modularity. If one part needed an update, the entire thing needed updating
+    - Applicatinos grow in taks and funcitonalities, with some tasks being distributed over systems or smaller apllicatinos, but the monolitch
+        application is immutable. 
+    - From monolithich, Simple Object Access Protocol application evolved as a new paradigm, and the start of microservices. 
+    - This involved "three tier architecture": Presentation tier, application tier, data tier. This allows diff people to be involved in diff tier updates
+    - Isolated components allow focus for diff types of developers and diff application funcitnlaities
+    - This model has been extedned and got even better with the emergence of virtual machines and data centres\
+    - Microservice architecture comes with a stateless mindset (miscroservice state should be managed outside of its own logic)
+    - this allows us to be able to run many replicas of our miscroservice and run its content on all nodes of our environment
+
+Microservice Features:
+    1) Managing an application in pieces allows for easy component substitution
+    2) Developesr can focus on one particular application and feature, and just need to know how to interact with other components, not how they work
+    3) Interaction is done with REST calls
+    4) They have prepared and isolated life cycles 
+    5) Each miscroservices can be written in a differen programing languages, allowing for max performance and portability 
+
+Infrastructures:
+    - In Monolithic applications, all application functionalities run togehter, and so developesr usually need to have a funll production like environment
+    - With virtual machines in our data centres, we are able to distribute host hardware resources between virtual nodes. 
+    - VMs work very well on monolithic and third tier applications, but applicaiton performance depned on the host shared resources given to the VM nodes
+    - For a time infrastructre teams started to use computer cloud providers, they started with Infrastrucure as a Service that allowed deploying virtual nodes to servers
+    - However, as many virtulisation options appearted, other options based on Linux kernal features and its isolation modesl came into being
+    - Process containers were designed to isolate certain resources, such as CPU, memory, disk I/o and network
+        -> This concept is what is now knows as control groups 
+
+Processes:
+    - A process is a way in which we can interact with the underlying operating systems
+    - Processes run in its own environment, but it can shared ingormation with another process that runs in parallel on the same systems
+    - Each process in a system is identified uniquely by what is called a process identifier.
+    - For interaction with the underlyig system, each process runs with its own environment variables, and can also manipulate this env with the build in features of the outside
+    - All processes running on a system are managed by os kernels, and have been scheduled on the CPu by the kernel.
+        -> OS kernel will be responsible for providing system resources to process and interact with system devices
+        -> The keernele is part of the os that interaces with host hardware, using forms of isolation for os processes, under the definition of kernel space
+        -> Other processes will run under the def of userspace, kernel space has higher priority for resources and manages userspace
+
+Microsservices AND Processes:
+    - Microservices are minimum piece of software with funcitanolity that we can build as a component for an application
+    - We can associate a miscroservice witha  process (this is the most common way of runnng them), a rpcess with full funcitliaty is a microservices
+    - An appliction si composed of microservices, and hence processes. Usualy interacting with REST 
+
+Containers: 
+    - Containers are related rto process isolation 
+    - A container is a process with all its requirements isolated with kernel features
+    - This package-like object will container all the code and its dependencies, libraries, binaries, and settings that are required to run our process
+    - Containers are mainly based on cgroups and kernel namespaces, whereas VMs OTOH are based on hypervisor software, and provides sandboxed resources to guess virtual hardware
+    - This means each VM will run its own operating system, and allow us to execute different os on the same hardware host. 
+    - Each vm will get a portion of resources an dthe kernele will manage how they are shared among different running processes 
+    - Each vm will execute its own kernel 
+    - Easy to scale application components since vm templates exist, and all hypervisors all interation with them ysing command line or apis 
+        -> this does however mean doubling the reources, vms are not the perfect solution for elastic services 
+    - Containers will share the same kernel because they are just isolaes processes 
+    - We just add a teemplated filesystem and resources, and it will run sanboxed inside its own defined environment 
+        -> As a result, containers are lightweight and start and stop as fast as their main processes 
+            -> They are as lightweight as the processes they run, since we don't have anything else running inside a container 
+        -> All resources that are consumed by a conatiner are process related, which is great interms or harware resource allocation 
+    - "Containers are a perfect solution for microservices as they will run only one process inside. this process should have all the required
+        functionality for a specific task, as we described in terms of microservices 
+    - Similar to vms, there is a concept of a template for container creation, called images
+    - Docker containes are secure by default. Kernel isolation and the king of resources managed inside conatienrs provide a secure environment 
+    - By default, containers will run with a limited set of system calls alloweds 
+    
+    VMS:       hardware -> Host OS -> Hypervisor -> Guest Virtual Hardware -> Guest OS -> Applications...
+    Container: hardware -> Host OS -> Container Runtime -> Containers...
+    
+    - So containers are faster to deploy, manage, are lightweight, and secure by default 
+
+Images:
+    - Imanges are tmplates for creating containers. An image will conatiner everything required by our process or processes to run correctly 
+    - Images, like tempates are immutable, which means they dont change between executions 
+    - Images are built from a series of layers, and all these layers packaged together container everything required for running our application rpocess
+    - All these layers are read only and the changes are stored in the next upper layer during image creation 
+    - Layers are packaged to allow ease of transport between different systems or environments and they include metainformation abou the required architecture to run 
+    - Images include informaiton about how the process should eb run, which user will execute main process where persistent data will be stored, 
+    - Images can be built with reproducible methods using Dockerfiles or store changes made on running conainers to obtain a new image 
+
+Containers: 
+    - A containers adds a new read-write layer on top of image layers in order to store filesystem difference from these layers 
