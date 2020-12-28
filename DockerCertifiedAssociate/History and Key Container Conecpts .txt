@@ -80,3 +80,15 @@ Images:
 
 Containers: 
     - A containers adds a new read-write layer on top of image layers in order to store filesystem difference from these layers 
+
+Process Isolation:
+    -A kernel provides namespaces for process isolation 
+    - Each conainer runs with its own kernel namespaces and has th following
+        -> Processes: The main process will will be the parent of all the other ones within the container
+        -> Netowkr: get its own network stack with its own interfaces and ip addresses
+        -> Users: we will be able to map container user IDS wih host IDS
+        -> InterProcessCommunication: Each container will have its own shared memory, messae queues, without conflicting wiht other proceses on the host
+        -> Mounts: Each container wil have its own root filesystem and we can provide exernal mounts 
+    - Namespaces in lunix provide the first level of isolation for a process running within a container 
+    - Althogh netowkring is isolated too, as each conainer gets its own network stack, bu communicatinos will pass through host bridges interaces
+    
