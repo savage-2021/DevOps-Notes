@@ -1,0 +1,70 @@
+Running Docker Containers 
+
+Docker Daemon Objects 
+    - images: These are the basis for creating containers 
+    - Containers: A congtainer is a compoud of isolated namespaces, resources, and files for a process. 
+        This process will run inside a wrapped environment as if it was alone in its own system, sharing the host kernel and its resources
+    - VOlumes: These are used to bypass the copy-on-write cnatiners filesystems, and as a result, we are able to store dat ouf of containers
+        This avoids the containers life cycle 
+    - Networks: Containers run their own network namespace, but they need to react real infracturcutre networks. They will use host physical interaces in birdge model
+        creating virual inteeraces for each container interface 
+    - Plugins: 
+
+Docker Swarm Cluster Objects    
+    - Swarm: This provides cluster properties 
+    - Nodes: Nodes are hosts that are part of the cluster 
+    - Services: Docker Swarm will not manage conainer. The minimim scheduling unit in Docker Swarm is the service. They wil create tasks, and those will be represetned by containers
+        We deploy services by decaling gheir state and the number of tasks required to be healthy.
+        We will be able ot create services, update their properties, or remove them
+    - Stacks: These are multi service applicatinos. We will define all the components required by an application to run. 
+
+Docker Container Actions:
+    create, start, run = (create + start), pause, stop, kill = (stop with no wait time), restart, rm, prune, rename, update 
+
+    1) docker container create
+    2) docker container start 
+
+Container Netwrok Properteies
+    - By default containers get their own network namespace. They get their own IP addresses, and own resources. 
+    - The Docker daemon using networking bridging and containers get their own name resolution configuration by copying the host values 
+    - Networkign briding = creating a single network from multiple network segments 
+
+    Flags:
+        1) --name <-- we can provide the name of the network 
+        2) --add-host <-- this is how to add hosts and their ipaddress 
+        3) --dns <-- This allows us to override the default dns resolution 
+        4) --dns-option <-- This will add cotainer-related options to an embegged DNS server 
+        5) --dns-search <-- This option sets the search domanin names
+
+     Running two conainers together on the same network subnet will have unlimited network access. 
+        -> Both containers will use the same default bridge network (which is why they run in the same network)
+
+    But $"time" before a docker command to time how lnog it takes 
+
+Using Host Namespaces 
+    - Related to container isolation 
+    - Any missuse can cause huge security issues 
+
+Limiting host resources 
+    - 2 types of limits, soft and hard :D 
+    - Soft limits represent a reservatino of resources, this means taht a container could consume more memory than declared, but this value will 
+        be reserved 
+    - Hard limit, no more than the declared value will be consumed. The container will die if this limit is supassed 
+    - $ docker container update (this is used to update container limits)
+    - $ docker container top ${containername} <- this shows us information in a toplike format regarding the cotnainers internal processes 
+
+Converting containers into Images (2 ways)
+    - $ docker commit
+        This allows is to create an image from a container, we will add a conainer's layer as a new image layer, and therefore obtain a new image 
+    - $ docker exprot 
+        This will create a .tar file container the container;s filesystem, this streams the binary to standard output 
+    
+    - $ docker container diff 
+        -> This shows all the added and copied files that were changed in the exeuction 
+
+Formatting and filtering information
+    - Docker uses Go templates to modify output format 
+    - $ docker container ls --format "table {{.Names}}"
+
+Managing Devices
+    - we can provide access to host devices inside container using the --device argument 

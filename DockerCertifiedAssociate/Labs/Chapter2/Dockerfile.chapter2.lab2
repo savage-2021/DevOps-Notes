@@ -1,0 +1,4 @@
+FROM alpine
+RUN mkdir /data 
+RUN echo "hellow world" > /data/helloworld
+VOLUME /data

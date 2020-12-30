@@ -1,0 +1,125 @@
+Building Doker images
+
+Anybody can make images from scratch, but it is not easy to craete images with sufficient quality and security for production 
+Developesr create their own images, however the building pocess usually starts with a previous image
+All image build processes wil start with a FROM statement. THis indicates the previous image 
+
+3 Ways of creating an image
+1) Using a file with instrucinos (DOckerfile)
+2) Interacting with files in different container layers, execurint one container, modifying its content, and then storing the changes made
+3) Using an empty layer, and adding components by hand, file by file, also known as craeting an image from scratch 
+
+Dockerfiles
+    - First uses abase image, to build the environment, If the image is not presetn, the Docker daemon will download its layers automatically 
+    - Using the downloaded layesr, docker will automaticaly run a container using this image, and execute the declared commands 
+    - After software installation, Docker will execute a docker container commmit command internally to persist these changes on the new layer in order to use them as a base forthe next step 
+    - A container is alawys created using an image as a tempate.
+    - A Dockerfile describes a reusable process 
+
+Creating Images Ineractively 
+    - Tis is done by running a conatiner, and making change son the fly to rootfs
+    - This is very useful when an applicatinos installation cannot be automated, but lacks reproducibility 
+        1) Start an interactve container $ docker container run -ti debian 
+        2) install and update relevant packages $ apt-get update -qq 
+        3) you can exit the container once done $ exit 
+        4) We've exited the current main process, and as a result retunred to our host. We will now look for the last conatiner that was executed on our host, then save the container layer as the new image layer 
+            $ docker container ls -l 
+            $ docker container commit hash container-name 
+
+Creating Images from scratch 
+    - This is the most effective method 
+    - You can use a Dockerfile as described above, but the inital base image will be an empty reserved one, known literlly as "scratch" 
+    - Scratch is not a real imag,e it only contains the root filesystem structure and its meta-information 
+    - Images built using this method must container all binaries, libraries, and files required by our proess 
+
+Image tagging and meta-information 
+    - Using labels it is easy to search for specific images by environment, eg: 
+        $ docker image ls --filter label=environment
+        $ docker image ls --filter label=environment=test
+    Docker images can have many names, so removing an image by its name, does not really remove the image if it is in use by other names 
+    If we use its image ID to remove, the docker daemon will inform us about multple images with different names using the same layers, 
+    and will not delete the image nless we use --force 
+
+    $ docker rmi (this is an alias for docker image rm )
+    $ docker image prune  (this removes dangling images)
+        -> A dangling image is a build of an image that hasn't been given a name 
+
+Docker registreies and repositories
+    - Images must be stored somewhere
+        -> Locally, these are stored under var/lib/docker/images 
+        -> Docker Registry is a server application that will store and let us download and upload images as required
+    - DR provides an API for sharing informatino and image layers using a Docker client 
+    - Docker Hub is the cloud based registry provided by Docker, it can store public and private images 
+
+Securing Images 
+    - Docker conainers are secure by default, as they run inside namespaces and cgroups isolaion 
+        -> cgroups is a Linux kernel feature that limis, accounts for, and isolates the resource usage of a collection of processes 
+    - Best Practices for Docker content 
+        1) Onnly contain mandatory content 
+        2) Always declare resources used on your images 
+        3) Update image content packages is there is a some security bug fix 
+
+Managing Images 
+    Pruning: 
+        - Dangling images can be a nightmare if you don't take care of them from the beginning
+        - Dangling images are images that aren't referenced and therefore are not used by any other image 
+        - They are just layers created in image builds, that are no longer used for various reasons, they should be deleted to save space 
+        - Docker provides the docker image prune actino, which by default removes all dangling images 
+            -> You can also filter which dangling images you wanna prune by using the $ --filter label=?=? flag 
+    Listing Images:
+        $ docker image ls 
+        - This command can be extedned witht he --format modifier in the GoLang format 
+        $ docker image ls --format "table {{.ID}}\\t{{.Repository}}:{{.Tag}}\\t{{.CreatedAt}}"
+        - this to, can be filered using the --filter keyword 
+    
+    Sharing Images:
+        $ docker image pull <image:tag>
+        -> This will download all image layers 
+        $ docker push 
+        -> to upload image
+        Docker registries reuiqre logging in, usualing using TLS encryption to connect,  and this is enabled by default 
+        $ docker image save 
+        -> This command will stream output to standard output by default 
+        -> So you can insert it into a .tar file container ing all the layesr and their files and naifest file neeeded to recreate that image 
+
+    Multistage building and image caches 
+    1) A new feature 
+        - Before this, if you wanted to ensure minimum image size and void compulers on final production images, we had to install the packages required
+            for compiling, execute the binary's bui;d, and then remove all nonrequired software like the compilers. Which is a real security problem in production 
+        - Automating this kind of compilation is not easy 
+    - We can use many build definitinos on a Dockerfile to create small and comp[iler free images]
+        -> These images only have applicable libraries, executables and configuratinos 
+        -> All compoilation steps will be done on another image 
+    Example of a multistage build 
+            # FROM alpine AS sdk
+            # RUN apk update && \
+            # apk add --update --no-cache alpine-sdk
+            # RUN mkdir /myapp
+            # WORKDIR /myapp
+            # ADD hello.c /myapp
+            # RUN mkdir bin
+            # RUN gcc -Wall hello.c -o bin/hello
+
+            # FROM alpine
+            # COPY --from=sdk /myapp/bin/hello /myapp/hello
+            # CMD /myapp/hello
+        In this example, we start building a name called sdk (we name is so we can reference it later)
+        In the sdk age, we compile our C code after installing the alpine-sdk package, and the other required tools for the task
+        As a result, we obtain a binary with our applicaiton, located in the /myapp/bin directory 
+        In the next stage, we start again with a fresh alpine image, and we just copy the comiled hello binary from the sdk build stage 
+        As always in a building process, this conainer is commited as our new image 
+        Multistage building simplifies the craete of images and imporoves securyt, this way the process will just add previously created binaries and libraries instead of compilers 
+
+        Basically, in one stage, we use all the dev tools to create an executable, but we don't need those dev tools anymore, so to make it EVEN smaller, we just can just start a new image
+        and copy over the compiled executable and run that 
+
+    Templating Images 
+        - Using prepared Dockerfiles with a certain template format is common 
+        - It is super useful to pass arguments and use environment variables during build to craete different images for different CI/CD stages 
+        - Templating is key when building using Ci/DC orchestratino, but there are a few rules: 
+            1) Don't use debugging tolls in productino
+            2) Dn't use credentials as arguments when building. The docker hisotry command will reveal the credentials you used. (NOT GOOD!!)
+            3) Proxy settings are prepared for use as arguments
+    
+    Image Releases and Updates
+        - Base images should be updated in critical image components and these changes do not happen very frequently 
