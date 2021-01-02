@@ -1,0 +1,90 @@
+Introductino to the Docker Enterprise Platform
+
+- Continaer As A Service idea 
+
+Docker Editions:
+    1) Docker Community 
+        Normally we are just redering to the docker enginer (daemon)
+        - other community products
+            * Docker Toolbos: This was the first approach available for Microsoft Windows and Apple Mac
+            * Docker Machine: Docker Machine allows us to provisino Docker hosts 
+            * Docker DesktopBuilds on docker toolbox (which was successful), so this enables developers to have their own kubernetes envs 
+        - Docker Community Editino provides a complete Docker Enginer platforrm
+            -> Hence we can can crate a cluster with either Docker Swarm or Kubernetes 
+            -> Docker Swarm does not have Role Based Access Control for user management 
+            -> We also have to provide a way for publishing applicatinos securely 
+            -> For most users docker swarm with some tweaks is enough 
+            -> Kubernetes can be deployed on top od Docker COmmunity Editino, we just use the Docker Engine as the runtime for the kubernetes cluster 
+            -> Docker's approach "batteries included, but interchangeable", everything works out of the box, but we can change it 
+    2) Docker Enterprise
+        -> Has everything that is missing from Docker Swarm 
+            -> Provides full container as a service platform 
+                1) Docker Universial Control Plane (UCP)
+                2) Docker Trusted Registry (DTR)
+        -> Has desktop funcinoality for developers 
+        -> Docker enterprise was created with developers in mind, enterprise helps reduce frictino between dev and prodiution 
+        -> Products:
+            Docker Enterprise Enginer: Very similar to the community editino, but it provides full time support subscription
+            Docker Unicersal Control Plane: 
+                - It provides a kubernetes produtino ready platform out of the box, on top of a prod docker swarm cluster 
+                - Best optino for getting a kubernetes cluster with imnimal effort 
+                - Cluster disctribution is supported by Docker, so fully tested kubernetes intergrations 
+                - kubernetes releases have to be frozen for the producut's life time 
+            Docker Trusted Registry: 
+                - A registry is always required to work wiht containers 
+                - DR is open source, but not enough for production 
+                - Doesn't provide authenticatino or authorisatino
+                - Docker Trusted Regsitry does ! 
+                - DTR uses a RBAC model for this 
+                - It includes CI/CD workflow integrations or different stages and security image scanning 
+            Docker Desktop Enterprise 
+                - Just a desktop application 
+    
+    Understanding CaaS 
+        - CaaS is a platform that can be used to provide container services to users 
+        - Usually associated with cloud providers and their solutinos 
+        - CaaS solutions must provide full container workflows 
+        - CasS and KaaS are aimed at users that require a comlpete solution 
+        - These solutions must contain:
+            Authorisation, authenticatino, runtime, publishing, registry, status, integrations 
+        - If a service has monitoring and logging as well, its called Platform as a service 
+    
+    - Docker Enterprise Platform 
+        - This is a CaaS platgorm 
+
+        Docker Engine 
+        
+        Universal Control Plane 
+            - UCP provides the control plane for the docker enterprise platrofm
+            - It provides all the processes and tools you need in order to manage all your cluster components and their sttatues 
+            - It can do deployments on master and worker nodes 
+            - It is based on Docker Swarm orchestration, but the core components will run as multi conainer applications 
+            - These core processes can only run on defined nodes 
+            - UCP will also deploy some distributed databases 
+            - All internal cluster communicatinos will be encrypted using TLS 
+            - Cluster authenticatino and authorization will be managed by UCP 
+                -> LDAP and other third party systems can be integrated 
+            - UCP procdides both a UI and API to manage a cluster's resources 
+            - UCP also provides an interated component for publishing applications deployed within the cluster 
+                - Its called Interlock, and based on nginx 
+        
+        Docker Trusted Registry 
+            - For CaaS, we need a registry to store images 
+            - This registry must provide secure access and roles because we need some granularity when lubihsing images 
+                -> Think owners etc 
+            -  We need to ensure image immutability, DTR provides this 
+            - It is built ontop of the open source Docker Registry
+            - DTR provides image scanning and signing 
+            - It uses a common vulnerabilities and exposures database to fund any vulnerable files, content found will be reported to admins 
+            - DTr can also be integrated into a CI/Cd pipeline, alsong with its image promotion features 
+
+
+    Planning your Docker Enterprise deployment 
+        - Docker Enterprise provides a production ready CaaS platform, we all have been discussing throughout this chapter 
+        - Docker Swarm and Kubernetes reuiqre an Odd number of master nodes to work properly 
+        - Docker Swarm doesn't require an external key-value store, whilst kubernetes does 
+        - Docker enterprse will deploye this key=valuye store with UCP, so a minimum of 3 manager nodes will be required to provide high availability 
+        - All managers will run the same service 
+        - Needs a minimum of two worker nodes for high availability 
+        - Fixed IP addresses for the manager and worker nodes are preferred
+

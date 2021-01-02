@@ -1,0 +1,46 @@
+Container Persistency and Networking
+
+    - Container are processes that run on the host 
+        -> How does this work on a pool of nodes? 
+        -> Requires special logic for high availability 
+        -> Applicatinos myst be completely portable and avoid friction 
+        -> The pool of hosts must be able to communicate with all containers 
+
+    Understanding stateless and stateful containers
+        - Portibillilty is key and so is high availability 
+        - containers are not ephemeral 
+        - Volumes are used to bypass the internal file system and life cycle of containers. 
+            -> Everything inside a volume is outside of a containers filesystem 
+            -> This helps applicatino performance and also persists data, even if a container goes download
+            -> Volumes have to be shared for shared containers to access them in a distributed setup 
+            -> For stateful porcesses, we should provide external volumes or databases to store the process data 
+    
+    Learning how Volumes work
+        - In a dockerfile the keyword to add a volume is VOLUME ${path} 
+        - Unnamed volunes
+            -> not given a name by us, but a random one by docker. This can make it hard to track. This is defined on the image 
+            -> grows under the docker path route 
+        - Named Volumes 
+            -> These are the volumes we craete manually 
+            -> can be stored under the docker route path, or other places if using plugins 
+            -> Can be remote, and therefore not store remote storage 
+        - Localhost directories or files: 
+            -> In this case, we will use host directories and diles inside containers
+            -> We usually refer to these volumes as bind mounts 
+        - tmpfs volumes 
+            -> These kind of volumes are temporal and they only persis in the host memory, when the container stops, the volume will be removed 
+
+    Volume Object Actions   
+        craete, insepct ls, prune, rm 
+        - prune will remove all created volumes not in use by a container 
+    
+    Using Volumes in conainers 
+        Unnaed volumes 
+            - Defined in the container images 
+            - $ docker image pull --quiet postgres:alpine
+                -> This here, will define an unamed volume to bypass the copy-on-write conainer filesystme 
+            - Docker volumes always survive docker conatiner rm , unless we use the --volumes flag to remove them 
+    
+    Mounting 
+        - Docker container can mount volumes using two different optinos in temrs of container creation or executino: 
+            -> --volume this takes three options 
