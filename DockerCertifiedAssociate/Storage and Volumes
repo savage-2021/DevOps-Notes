@@ -1,0 +1,97 @@
+Compare and Contrast Object and Block storage and when they should be used:
+    - Ideally, very little data is written to a cntainer's wriatebl layer, and you use the Docker volumes to write data. 
+    - Some workloads require you to be able to write to the container's wraitbel layer, this is where storage drivers come in. 
+    - Docker supports several different storage drivers, using a pluggable architecture. 
+
+    * About Storage drivers
+        - Storage drivers allow you to create data in the writable layer of your container, the files won't be persisted after the container os deleted
+        - The read and write speeds are also lower than the native filesystem performance 
+        - Each layer in a docker image is read only, except for the last one 
+            -> Each layer is only the set of differences that come before it 
+        - When you create a nwe conainer, you add a new writabele layer on top of the underlyig layers, this is called the conatiner layer 
+        - The major diff between containers and images is the top writable layer 
+        - Copy on Write Strategy
+            -> for max efficiency, if a file in a lower layer in the image and another layer needs access to it, it just uses the existing file. 
+            -> The first time the upper layer needs to modify the file, the file is copied into that layer and modified
+            -> This is to minimize I/O and reduce layer size 
+        - The top writable layer is as small as possible 
+        - Whne an existing file in a container is modified, the storage driver performs a cCOW operation
+        - Storage drivers include: aufs, overlay, overlya2 
+    
+    - Which storage driver to use? 3 Different factors to consider 
+        - If multiple storage drivers are suppoorted in your kernel, Docker hasa prioritised list of which storage driver to use if no 
+            storage driver is explicitly configured
+        - Use the storage driver with the best overall performance and stabability in most usual scenarios 
+
+    - When possible, overlay2 is the recommended storage driver, it is often the default storage driver 
+    - When in doubt, use a moder linux ditro with a kernel that supports the voerlay2 storage drivers, and use Docker volumes for write-heavy workloads
+    - Other considerations 
+        -> Overlay2, aufs, overlay all operate at the file level rather than the block level, this uyses memory more efficiently, but in heavy workloads,
+            the containers writable level with grow quite large
+        -> Block level storage drivers like devicemapper, btrfs perform better for write heavy workloads 
+        -> For small containers with many layers or deep file systems, overlay will perform better than overlay2 
+        -> Highest Stabability: overlay2, overlay, auf, devicemapper 
+    - To check your storage driver: $ docker info
+
+Demonstrate how storage can be used across cluster nodes 
+    - This is possible with Volume Plugins, which can provide persistent storage across a cluster 
+    - A network plugin might provide network plumbing 
+
+Demonstrate how to configure devicemapper       
+    - thin pool: a storage souce that provides on-demand allocation for storage space (similar to virtual memory)
+    - Device Mapper is a kernel-based framework that underpins many advanced volume management technologies 
+    * Configure Docker w the devicemapper storage driver 
+        -> Configure loop-lvm mode for testing 
+            - This mode is onlny for testing, the loopback mechanism allows files on the local disk to be read from and written
+                from as if they were an actual physical disk of block device, however, IO will be slower, and can have race conditions 
+            - Still, its usefyl for debugging 
+        -> To do so, stop docker, edit /stc/docker/daemon.json, and insert storagedriver as devicemapper, then restart docker 
+        -> Production hosts using the devicemapper, must use direct-lvm as mode, this mode uses block drvices to create the thin pool, 
+            its faster than the loopback (loop-lvm) mode, 
+        -> Docker direct-lvm mode is easy enough to do if you're starting it for the first time, but not supported after docker has prepared the block  
+            device for you 
+        -> The manual proceedure is long 
+            1) Identify the blaock you want to use
+            2) Stop docker 
+            3) install lvm2, device-mapper
+            4) Create a physical volume on your block device 
+            5) Create a docker volume on the same device 
+            6) Create two logical volumes 
+            7) Convert the logical volumes to a thin pool and a storage location for metadata for the thin pool 
+            8) Configure autoextenion of thin pools via an lvm profile 
+            9) Configure autoextenion of thin pools via an lvm profile 
+            10) Apply the LVM profile using lvchange 
+            11) Ensure monitoring of he logical volume is enabled 
+            12) Start Docker 
+            13) docker info
+    - Manage devicemapper
+        - Monitor the thin pool: Use nagios, don't use the LVM autoextension alone. You can monitor free space using lvs -a 
+        - TO view LVM logs, use $ sudo journalctl -fu dm-event.service 
+    - Increase Capacity on a running device
+        - Resize loop-lvm 
+            - device_tool_tulilty 
+                $ ./device-tool resize 200GB 
+            - Operating system utiliities 
+                1) truncate -s new size /var/lib/docker.devicemapper/data 
+                2) Reload it  
+        - Resize a divert-lvm thin pool 
+            - To extend a direc-lvm, you need to first attach a new block deive to the docker host, 
+                1) gather info about your volume group 
+                2) Extend the volume group 
+                3) Extend the docker/thinpool logical volume 
+                4) verify the new thin pool size 
+    - Activate devicemapper after reboot 
+        - If you reboot host an find docker service failed to start, look for the error "non existing device" 
+            1) You need to reactivate the logical volumes with this commend 
+                $ sudo lvchange -ay docker-thinpool 
+    - How devicemapper works 
+        -> Uses dedicated block devices rather than formatted filesystems and operates on files at the block level for max performance for 
+            copy on write operations 
+        -> Uses snapshots, which stores the differences introduced in each layer as very small, lightweight thin pools 
+    - Devicemapper workflow 
+        - All objects are store din /var/lib/docker/devicemapper     
+        - reads happen at the block level 
+        - writing happens by the "allocate on demand" operation 
+    
+        
+        
