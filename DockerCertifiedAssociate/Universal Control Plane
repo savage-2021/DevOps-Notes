@@ -1,0 +1,17 @@
+Universal Control Plane
+    - The Universal Control Plane is the component incharge of manageing  clusters (in the enterprise edition) 
+    - Previously known as Docker Datacenter 
+
+    Understanding UCP components and features 
+        - Docker's UCP provides the control plane for the Docker Enterprise Platform, based on swarm, but intergrates with kubernetes 
+        - Current features
+            - Centralised cluster manavement interface 
+            - A cluster resource environment 
+            - Role Based access control 
+            - A client environment via WebGUI or the CLI 
+        
+        UCP Components on Manager Nodes 
+            - Manager nodes will run all UCP services, including the we UI and data stores that persist the state of the UCP
+            - Usually deploy at leasst 3 manager nodes as docker swarm or kubernetes requires an odd number of nodes for distributed consensus 
+
+            UCP Components on Worker nodes 
