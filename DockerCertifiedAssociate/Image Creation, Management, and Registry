@@ -1,0 +1,171 @@
+Image creation, management, registry
+
+Describe a Dockerfile
+    - The docker biuld command builds an image from a Dockerfile and a context
+    - A build context is the set of files at a specified location 
+    - The PATH is a direcoty, the URL is a git repo 
+    - A context is processed recursively, so a PATH includes any subdirectories 
+    - A contest is a set of files at a location, these files are sent to the docker daemon on the build keyword 
+    - Because of its recursive nature, if you use the home drive as your build context it will send the entire contents of your harddrive 
+    - use the flag -f to point to any dockerfile on your system, the -f gives a filepath 
+    - use -t to tag a repo, this can be done multiple times to multiple differnt repos all executed in one command 
+    - A Dockerfile must begin with either comments, global arguments or FROM 
+    - whitepace is ignored
+    .dockerignore file  
+        - before the docker cli sends the context to the docker daemon, it looks for the dockerignore file at the root of the context 
+        - if this exists, the CLI modifies the context to include files and directories that match patterns in it
+        - Mathcing is done using Go's filepath.Match rules 
+    * Instructions:
+        FROM
+            - Initalises a new build stage and sets the base image for subsequent instructions 
+            - this keyword can appear multiple times 
+            - ARG is the only instrucion that may precede FROM. FROM instructions support variables that are declared in ARG    
+        RUN 
+            - has two forms 
+                RUN <command>
+                RUN ["executable", "param1",...]
+            - The RUN instruction will execute any commands in a new layer on top of the current image and commit the reuslts 
+            - The cache isn't invalidated for each build using the RUN instruction, use the --no-cache flag to do this 
+        CMD 
+            - There can only be one CMD form in a Dockerfile, if more than one, only the last one will take effect 
+            - 3 forms 
+                1) CMD ["executable", "param1", "param2"]
+                2) CMD ["param1", "param2"] as default parameters to ENTRYPOINT 
+                3) CMD executable param1 param2
+            - If you would like your container to run the same executable everytime then you should consider using ENTRYPOINT in combo with CMD 
+        LABEL 
+            - This adds metadata to the image 
+            - Its a key value pair 
+        EXPOSE  
+            - This tells docker the container listens to specified network ports at runtime 
+            - You can specify UDP or TCP, but TCP is default 
+            - The expose keyword does not actually publish the port, to do this you need to use -P at runtime 
+            - regardless, uou can override this instruciton with docker run -p newport:port 
+        ENV 
+            - The ENV sets the environment variable key to the value 
+            - This value will be in the environment for all subsequent instructinos in the build stage, and cna be replaced in many as well 
+            - You can view the value using docker inspect 
+        ADD 
+            - Has two forms 
+            - Copies new files, directories, or remote file URLS from src, and adds them to the filesystem of the new image at the parth <dest> 
+        COPY 
+            - Has two forms 
+            - THe COPY instruction copies new files or directories from <src> and adds them to the filesystem of the conainer at the path <dest>
+        ENTRYPOINT 
+            - Has two forms 
+            - Allows you to configue a container that will run as an executable 
+            - Command line argument sto docker run <image> will be appended after all elements in an exec form ENTRYPOINT and will overfide elements specifed using CMD 
+            - THie allos arguments to be passed to the entry point i. docker run <image> -d will pass the -d argument to the entry point 
+            - You can override the ENTRYPOINT instruction using the eocker run --entrypoint flag 
+            - Basically, entrypoint is the shell program to run, CMD is the default arguments, passing more arguments to the docker command will override CMD 
+                -> --entrypoint flag will override entrypoint 
+        VOLUME 
+            - This creates a mount point with the specified name 
+        USER 
+            - Sets the username of the process i guess 
+        WORKDIR 
+            - This sets the working directory of any instruction that follow 
+        ARG
+            - Define a variable that users can pass at build time to the builder with the docker build comand using the --build-arg 
+            - basically can take commands from the docker build --build-arg, which then get set as environment variables in the dockerfile 
+            - Recommended to give them default values ngl 
+        ONBUILD 
+            - This is a trigger instrucito to be executed at a later time, when the image is used as the base for another build 
+        HEALTHCHECK 
+            - HEALTHCHECK has two forms 
+                - HEALTHCHECK CMD command )check container healthy by rnning a command inside the container 
+                - HEALTHCHECK none )disable any healthcheck inherited from the base image 
+        SHELL 
+            - Allos the default shell for commands to be overridden 
+
+Describe and demonstrate how to create an efficient image via a Dockerfile
+    
+    Create ephemeral containers:
+        - Should generate containers that are as ephemeral as possible
+        - By ephemeral, we mean that the container can be stopped and destroyed, then rebuilt and replaced with absolute min setup 
+    
+    Understand build context:
+        - when issuing a docker build command, the current working directory is called the build context 
+    
+    Pipe Dockerfile through stdin:
+        - Docker has the ability to build images by piping dockerfile through stin with 
+    
+    Exclude with .dockerignore 
+        - Use to to ignore not relevant files for the build 
+    
+    Use multi-stage builds 
+        - Multi stage builds allow you to drastically reduce the size of your final image, without struggling to reduce the number of intermediate layesr and files 
+        - Because an imge is build during the final stage og the build process, you can minimize image layesr by leveraging the build cache 
+        - - order them from is less frequently changed 
+    
+    Don't install unecessary packages 
+
+    Decouple applications 
+        - Each container should onlty have one concert
+        - Decouple applications into muleiple containers makes it easier to scale horizontally and reuse Containers
+    
+    Minimize the number of layers 
+        - Only the instructions RUN, COPY, ADD create layers 
+            all other instructions create temporary intermediate images, and do not incraese the size of the build 
+        - Where possible, use multi stage builds, and only copy over the artifacts you need 
+
+    Sort multiline arguments alphabetically 
+
+    Leverage build-cache 
+        - When building an image, Docker stesp through the instructions in you dockerfile, executing eah in the order specified
+        - As each instruction is examined, docker looks for an existing imag ein ints cache that it can reuse, rather than creating a ducplicate imge
+        - ADD and COPY instrucitons, the contents of the files in the image are examined and a checksum is calcuedated for each file 
+        - Aside from the ADD and COPY commands, chache checking does not look at the files in the container to determine a cache match 
+        - ONce the cache is invalidated, all subsequent Dockerfile comands generate new images and the cache is not used 
+    RUN 
+        - Avoid run apt-get upgrade and dist-upgrade as many of the essential packages from the parent images cannot upgrade inside an unprivileged conainer 
+        - Using apt=get pdate alson in a run statement causees caching issues and subsequent apt-get instlal instructions fail 
+            $ RUN apt-get update 
+            $ RUN apt-get install curl 
+            ^^ This is bad, as won't be cahced, and causes issues sometimes and the secod line is skipped
+            Do this instead
+            $ RUN apt-get update && apt get install curl 
+    CMD 
+        - CMD should almost always be used in the form CMD ["executable", "param1", ...]
+    EXPOSE 
+        - You should use a common traditional port for your application 
+    ENV 
+        - 
+    ADD and COPY 
+        - COPY is preffered as its more transparatent, it only siports the basica copying of local files 
+        - If you have multiple dockerfile steps that use different files from your context, copuy them individually, rather than all at once to not invalidate the cache 
+    ENTRYPOINT
+        - best use is to set the image's main command, allowing that image to be run as an executable 
+
+Describe and demonstarate how to use CLI commands to manage images ushc as list, delete, prne, rmi     
+    - delete 
+        $ docker rmi or docker image rm 
+    - docker image ls 
+    - docker image rm 
+    - docker image prune 
+
+
+Inspect images and report specific attributes using filter and format 
+    $ docker image inspect 
+    $ docker images --filter "dangling=true"
+    $ docker images --format "{{.ID}} {{.Repository}}"
+
+Descibe and demonstrate how to tag an image 
+    $ docker image tag image:tag image:tag 
+
+Describe to to apply a file to create a docker image 
+    $ docker image build 
+
+How to Display layers of a Docker image 
+    $ docker image history 
+
+How to modify an image to a single layer:
+    Without rebuilding 
+        - create a container form the image: docker create
+        - export the conatiner to a flatteneed tar: docker container export 
+        - load the image back: docker image improt 
+    With rebuilding 
+        - use the flag --squash with docker build 
+
+Registry Functions 
+    - 

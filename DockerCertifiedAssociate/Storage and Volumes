@@ -92,6 +92,88 @@ Demonstrate how to configure devicemapper
         - All objects are store din /var/lib/docker/devicemapper     
         - reads happen at the block level 
         - writing happens by the "allocate on demand" operation 
+
+Describe how volumes are used with Docker for persistent storage 
+    - Volumes are the preferred mechanism for persisting data generated and used by Docker containers 
+    - Whilst bind mounts are dependent on the directory structure of the OS and the host machine, volumes are completely manage dby Docker
+    - Volumes vs bind mounts:
+        1) Volyes are easier to back up than bind mounts
+        2) You can manage volymnes ysing Docker CLI commands or the Docker API
+        3) Volymes work on boath Linux and Windos containers 
+        4) Volumes can be more safely shared among multiple containers 
+        5) Volume drivers let you store volumes on remote hosts or ckloud providers, to encrypt the contents of volyeor to add vfunctionaity 
+
+    - Volumes are also a better shoice than eprsisting in a container's writable layer, because a volume does not increase the sixze of the
+        containers using it, and the volume's contents exist outside the lifecycle of a given container 
+    - Three optinos to share files between host machine n container, once a container is stopped, volumes, bind mounts persist. tmpfs don't and go when container dies
+
+    * Choose the -v or the --mount flag 
+        -v nameofthevolume:/thepath:options 
+        --mount <--- this consists of multiple key value pair s
+        when using volumes as services, only --mount is supported 
     
+    Create and manage Volumes   
+        - Unlike a bind mount, you can create and manage volumes outside the scope of any container 
+            $ docker volume create  {name} 
+            $ docker volume ls 
+            $ docker volume insepct  {name}
+            $ docker volume rm {name}
+    Starting and managing a container with a volume 
+        $ docker run -d --name test --mount source=myvol,target=/app nginx:latest
+        $ docker run -d --name tes -v name:/app nginx:latest
+    
+    Docker Compose and Volumes
+        - Simpley add it in the volumes section of the yaml
+        - On the first invocation of docker-compose up, the volume will be created, from then onwards, it will be reused 
+        - A volume can be craeted outside of docker compose, and then referenced inside the docker-compose yaml 
+            -> It just has to be listed as "external" in the yaml file 
+    
+    Start a Service with volumes: 
+        - When you start a service and define a volume, each service vontainer users its own local volume 
+        - None of the coantiners can share this data if you use the local volume driver, but some volue drivers do support shared storage
+    
+    Read only volume
+        - Much the same way craeted as normal, but pass it the ro option 
+        - $ docker run -d --name test --mount nginx:/mypath:ro nginx
+    
+    Share Data among machines:
+        - For fault tolerant applictinos, you might need to configure multiple replicas of the same service to have access to the same files 
+        - There are two ways to do this
+            1) Setup some sorta cloud object storage system like amazon s3 
+            2) External storage system like NFS 
+        - Volume drivers allow you to abstract the underlying storage systemf rom the application logic 
+            -> if you services use a volume with an NFS driverm you can update the services to use a different driver 
         
-        
+        - Use a volume driver 
+            Whjen you crate a volume usig docker volume crate, or when you start a container which uses a not yet created volume, you can specify a volume drive required
+
+        Backup, restore, or migrate data volumes 
+            -  --volumes-from flag to craete a new conatiner that mounts that volume 
+    
+    Removing:
+        $ docker run --rm  -v 
+        $ docker volume prune 
+
+Identiy the steps you would to take to clean up unused images on a file system also on DTR 
+    - Prune unused docker object storage
+        by defualt docker prune only cleaned up dangling issues
+            -> A dangling image is one that is not tagged or refeerenced by any container 
+            -> $ docker image prune 
+        - To remove all images which are not used by existing container, -a flag 
+            $ docker image prune -a 
+        - You can use the fliter flag as well --filter="until=24h"
+        - when you stop a container it is not automatically rmeoved unless you used the --rm flat 
+        to see all conatiner on the Docker host, included stopped containers, use $ docker ps -a
+        - Prune Volumes the same way x 
+        - Prune networks the same way 
+        - Prune everything: docker system prune 
+            -> Volumes are not pruned by default, and you must use the docker system prune --volumes 
+    - DTR Garbage Collection 
+
+State which graph driver should be used on which OS
+
+Summarise How an Application is Composed of layers and where those layers reside on the filesystem
+    * About storage drivers
+        - TO use storage drivers effecively, its important to know how Docker builds and stores images, and how these images are used by caontienrs 
+        - Storage drivers allow you to create data in the writable layers of your conatiner
+            -> They fiules won't be persisted adfter the container is deleted
