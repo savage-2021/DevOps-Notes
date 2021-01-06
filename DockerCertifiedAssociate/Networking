@@ -1,0 +1,124 @@
+Networking
+    - Describe the container model and how it interfaces with the Docker engine and network IPAM drivers 
+        * The Container networking model 
+            - Networking architecture is built on a set of interfaces, called a container netowrkring model 
+                -> provide portabilitu across diverse infrastructures 
+            - Path:
+                network infrastructure -> Network Driver -> Docker Enginer -> Netowkr -> Endpoint -> container 
+            - Container Network Model Constructs
+                1) Sandbox
+                    Conatins the network stack, the manageemnt of the containers interfaces, routing table, and DNS settings 
+                2) Endpoint
+                    An endpoint joins a sandbox to a network. The endpoint exists to abstract away the connection details 
+                    and makes this more portable.
+                3) Network
+                    A network is a collection of endpoints that have connectivity between them. CNM does not specify a netowkring in 
+                    terms of the OSI model. An implementation could be a linux bridge, a VLAN etc 
+            - Container Network Model Driver Interfaces 
+                -> Provides two pluggable and open interfaces that can be controlled by users 
+                1) Network Drivers 
+                    - Docker Network Drivers provide the actual implemntation that makes netowks work.
+                    - They are pluggable so that idfferent drivers can eb used and interchanged easily to support diff use causes
+                        1) Native netowk drivers:
+                            -> They are a native part of the docker engine and are provided by Docker
+                            -> Muliple drivers to choose from, and they support diff abilities like overlap=y networks and local bridges 
+                        2) Remote Network Drivers: 
+                            -> Drivers created by the community 
+                            -> Provide intergratino with other software 
+                2) IPAM Drivers 
+                    -> Docker has a native IP Address Management Driver that provides default subnets or IP addresses for the netowkrs and endpoints 
+                        if they are not specified. 
+                    -> IP Addressing can also be manually assigned throuhg netowkr, container, and service create commands 
+                    -> Remote IPAM drivers also exist and provide integration to IPAM tools 
+            - Docker Native Network Drivers 
+                1) Host 
+                    Wiht the host driver, the container use the netowking stack of the host
+                    There is no namespace separation and all the interfaces on the host can be used directly by the contaienr 
+                2) Bridge 
+                    Creates a Linux bridge on the host that is managed by Docker
+                    Containers on a bridge can communicate with each other 
+                    External access can also be configured by a bridge driver 
+                3) Overlay 
+                    An overlay driver creates a network which supports multi host netowkrs out of the box
+                    uses a combonation of VLANS and Briges to acheive this 
+                4) MACVLAN 
+                    Uses the Lniux LACVLAN bridge to establish a connectino between conainer interfaces and partent host interface 
+                    Can be used to provide IP addressees to containers that are routable on the physical network 
+                5) None 
+                    The none driver gives a conatiner its own netowrking stack and netowk namespace, but does not configure interfaces inside the container 
+            - Network Scope
+                $ docker network ls 
+                Scope can either be local or swarm 
+                Local provides connectivity and netowkr services within the scrope of a host 
+                Swarm drivers provide connectvity and network srevices across a swarm cluster 
+                Swarm Scope network have the same network id 
+            - Docker Remote Network Drivers 
+                1) Contriv 
+                    - An open source plugin lead by Cisco Systems to provide infrastructure and security to multi tennant deployments 
+                2) Weave 
+                    - A network plugin that creates a virtual network that connects Docker conainers across multiple hosts or clouds 
+                3) kuryr 
+                    Utilizes Neutron 
+            - Docker Remote IPAM Drivers 
+                -> infoblox, an open source IPAM plugin that provides integratino with existing infoblox tools 
+
+    - Describe the different use cases fr the built-in network drivers 
+        1) Bridge Network Driver 
+            - easy to use, good for developers new to docker 
+            - Creates a private network internal to the host, so conainers on this netowrk can communicate.
+            - External access is granted by exposting ports to containers 
+            - Conainers added to this netowrk, can communicate with each other by using their conatiner naems 
+        2) Overlay Network Driver
+            - Radically simplifies many of the complexities in multihost networking 
+            - It is a swarm scope driver, which means that it operates across an entire SWARM or UCP cluster rather than individual hosts 
+            - With the overlay driver, multi-host netowrks are firs class citizens inside docker without provisinoiing or components 
+            - IPAM, Service Discovery, Multihost connectivity, load balancing, and encryption are built right in 
+            - The overlay driver decouples the conatinner netwrork from the underlyiny physical netowwrk.
+                -> This gives maximum portabliity 
+                -> Network policy, vicibilitily and security is controlled centrally through the Docker Universal Control Plans 
+            - An out of the box solutino which scales well 
+        3) MACVLAN Host 
+            - Newest driver 
+            - Very lightweight 
+            - It connects conatiner intrefaces directly to host interfaces 
+            - Containers are addressed with routable IP addresses that are on the subnet of the external network 
+            - Can communicate with resources outside the SWARM cluster without the use of NAT and portmapping 
+                -> This aids network visibility and torubleshooting 
+                -> Additionally the direct traddic ath between conatiners and the host interfaces reduces latency 
+        
+        - Userdefined bridge networks are best when you need multiple container to communicate on the same docker host 
+        - Host networks are best when the netwrok stack should not be isolated from ther Docker host, but you want other aspects of the conatiner to be isolated
+        - Overlay netowrks are best when you need conatiners running on different Docker hosts to communicate, or when using swarm services
+        - Macvlan networks are best when you are migrating from a VM setup or need your containers to look lik ephysical hosts on your netowrk, each with their own mac address
+
+
+    - Understand and describe the types of traffic that flow between the Docker Enginer Registry and UCP controllers 
+        The traffic between UCP and DTR is always encrypted to ensure security.
+        Traffic between conainer is not encrypedby default 
+        DTR/UCP management traffic used Mutual TLS 
+
+    - Create a Bridge network for a developer to use their containers on
+        By default, Docker Engine connects conatiner via a default bridge to the netowkr of the node
+        However, only overlay networks in a Swarm conetxt let containers communicate further than the node's netowkr boundaries 
+        * Userdefined network bridges and the default bridge 
+            - botha  link layer that forwards network traffic between netowrk segment services
+            - User defined bridges provide automatic DNS resolution between containers 
+                - Containers on the default bridge netwerok can onlu access each other bny IP addresses
+                - On a user defined netwrok bridge, containers can access each other by using their name/aliases 
+                - userdefined bridges provide better isolation, as it provides a scoped network in which only attached containers can communicate 
+            - Containers can be attached and detached from uers-defined netowrks on the fly 
+                - During a containers liftime you can connect or disconnect it from user defined networks on the fly
+            - Linked netowrks by default share environment variables 
+        $ docker network craete my-net 
+        $ docker network rm my-net
+        $ docker craete --name my-nginx --network my-net --publish 8080:80 nginx:latest
+        $ docker network connect my-net my-nginx
+        $ docker network disconnect my-net my-nginx
+    
+    - Publish a port so that an appliction is accessible externally 
+        - Multiple ways of doing this
+        - can use expose in the Dockerfile 
+        - docker run, you can use the parameter -P 
+            -> can also do it manually with docker -p 8080:80 
+        - You can also lock and randomise ports 
+
