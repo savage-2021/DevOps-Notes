@@ -122,3 +122,65 @@ Networking
             -> can also do it manually with docker -p 8080:80 
         - You can also lock and randomise ports 
 
+    - IDENTIFY WHICH IP AND PORT A CONATINER IS externally accessible on
+        - Basically, you can look up every port which is exposed using $ docker inspect ${container}
+        - To get port binding information, you could use $ docker port ${container}
+            -> $ docker ps -q (to get all the container ids)
+    
+    - Compare and Contrast "host" and "ingress" publishing modes 
+        * Publish Port on single host in Docker Swarm
+            - $ mode=host --publish
+        * Publish a service's ports using the routing mesh 
+            - To publish a service's ports externally to the swarm, use the --publish <PUBLISHED_PORT>:<SERVICE_PORT> flag 
+            - The swarm makes the service accesssible at the published port on every swarm node 
+            - If an external host connects to that port on any swarm node, the routing mesh routes it to a task
+            - The external host does not need to know the IP Address or interanlly used ports of the service tasks to interact with those services
+    
+    - Configue Docker to use External DNS 
+        - TO set the DNS server for all Docker conainers, use 
+            $ sudo dockerd --dns 8.8.8.8
+        - To set the DNS search domain for all Docker containers use:
+            $ sudo dockerd --dns-search example.com
+
+    - Describe and demonstrate how to use Docker to load balance HTTP/HTTPs traddic to an application 
+        * How to configure external load balancer 
+            - You can configure an external load balancer for swarm, either in combination with the routing mesh, or without using the routing mesh at all 
+            - Using the Routing Mesh 
+                -> You can configure a thrid party proxy to route requests to a swarm service 
+                -> The swarm nodes can reside on  aprivate network that is accesible by the load balancer, but not publicly 
+        * Without the routing mesh  
+            - set --endpoint-mode to dnsrr instead of the default vip 
+            - In this case, there is not a single virtual ip, instead Docker sets up the DNS entries for the service such that a DNS query for the service
+                name returns a list of ipaddresses, and the client connects directly to one of those 
+            - You are responsible for providing a list of ip addresses and ports to your load balancer 
+    
+    - Undertand and describe the different types of traffic between Docker Enginer, UCP, and registry 
+        - Traffic between DTR and UCP is always encrypted to ensure security
+        - Traffic between containers is not encrypted by default 
+        - DTR / UCP management traffic uses Mutual TLS 
+    
+    - Describe and demonstrate how to deploy a service on a docker overlay network 
+        1) Pubish a service's ports using the routing mesh 
+            docker service create --name web --replicas 3 --publish published=8080,target=80 nginx
+        2) Connect the service to an overlay network 
+            -> Create overlay network $ docker network create --driver overlay my-network 
+            -> Create a new service and pass the --network flag to connect $ docker service create --replicas 3 --network my-network --name web nginx 
+            OR 
+            -> Connect to an existing network using the --network-add 
+                $ docker service update --network-add my-network my-web
+            
+            -> Remove a network with 
+                $ docker service update --netowkr-rm my-network my-web
+    
+    - Describe and demonstrate how to troubleshoot container and engine logs to resolve connectivity issues between containers 
+        - $ docker network inspect
+            ^ Do this to see whether those conatiners are connected through the same network 
+            - Also its important if youre running docker swarm, if so your conatnienrs need to be bound together by the overlay network if theyre run 
+                on different nodes in the swarm 
+            - Bridge netowrks aren't able to communicate over node boundaries 
+    
+    - Describe how to roue traffic to kubernetes pods using ClusterIp and NodePort services 
+        - 
+    
+    - Describe the kubernetes container network model 
+    
