@@ -1,0 +1,91 @@
+
+Describe Securiy Administration and tasks
+    - 
+Describe the Process of signing an image 
+    - To sign a docker image, you neeed a delegation key paid.
+        -> These can be generated locally using $ docker trust key generate
+        -> Or they can be done by a certificate authority 
+        -> If you are importing a key $ docker trust key load
+    1) Add the private key to the local Docker trust repositoy 
+    2) Add the delegation public key to the notary server 
+    3) Use the delegation private key to sign a particular tag and push it up to the repository 
+
+Describe default engine security 
+    - Docker Security 
+        * 4 Major Areas * 
+        1) Kenel namespaces
+            - Docker containers are very similar to LXC conainers and they have similar security features 
+            - by $ docker run, docker crates a set of namespaces and control groups for the contanier 
+            - Namespaces provide the first and most straightforward form of siolation: processes running withing a container
+                cannot see, and even less affect processes in another containerm or in the host system 
+            - Each container gets it own network stack, meaning that a conainer doesn't get access to the ockets or interfaces of 
+                another container. Of course if the host is setup properly, conatiners can interact wiht each toher through their 
+                respective next work inteerfaces, just liek they can interact wiht external hosts. 
+            - When you specify public ports for your containersor use links then IP traffic is allowed between containers 
+            - From a network architecture point of view all conatiners on a given docker ost are sitting on bridge interfaces 
+            - This means that they are just like physical machines connected through a common ethernet swtich 
+        2) Control Groups 
+            - Another key component of Linux Containersm they implement accounting and limiting 
+            - They provide many useful metrics, but also they help ensure that each container gets its fair share of memory, CPUm disk IO
+                and that a single container cannot being down those resources 
+        3) Docker Daemon Attack Surface
+            - Daemon requires root priviliges 
+            - Only trusted users should be allowed to control your docker daemon 
+                -> Docker allows you to share a direcotry between conainers and the host 
+                -> Does this without limiting the rights access of tha container 
+                -> This means that you can start a container where the /host irecto is, meaning the coantnie
+                    can alter your file system without any restrction, similar to how virtualisatino allow filesystem resource sharing 
+            - This has a strong security implication
+            - For this reason, the REST API now uses a UNIX socket intead of a TCP socket bound on localhost 
+                -> You can then use tradtional UNIX permission checks to limit the access to the control socket 
+            - It is mandatory to secure API endpoints with HTTPS and certificates 
+            - The daemon is potentially vulnerable to other inputs such as image loading from either dick with docker load 
+            or from the network step docker pull 
+            - If you run Docker on a server, it is recommended to run exclusively ocker on the server, and mose all other serevices within
+                containers controlled bu Docker. 
+        4) Linux Kernel Capabilities 
+            - Docker starts containers with a restructed set of capabilities 
+            - Capabilities turn the binary dichotomy into a fine grained acccess control system
+            - Processes that just need to bind on a port below 1024 do not need to run as root, they can just be grated the net_bind_service capability instead 
+            - There are many other capabilities, for almost all the specific areas where root privileges are usualy needed
+            - Typical servers run several proecsses as root, insludding ssh, cron, logging, network configs 
+                -> Conainers are ffierence because almost all of those tasks are handled by the infrastructure around the container
+                -> This means that in most cases, conatiners do not need real root privileges at all , and therefore only need a 
+                    reduced capability set 
+                -> This means that root within a container has much less privileges than the real root 
+                -> This is good, ebcause ifan intruder manages to elevate to root inside a container, they haven't esclated to host 
+    
+        Docker Content Trust Signiture Verification
+            - The Docker engine can be configured to only run signed images
+            - The signiture verification feautre is build directly into the dokerd binary 
+            - This is configured in the daemon.json, whereby only repositories with user-specified root key can be pulled and run
+            - 
+
+        
+    Describe Swarm Default Security
+        - Uses public key infrastructure 
+        - Built into docker, makes i sinmple to securely deploy a container orcehestration system. 
+        - THe nodes in a swarm use multual Transport Layer security to authenticate, authorise, encryp the communications with other nodes in the swarm 
+        - When you crate a swarm by running docker swarm init, docker designaes itself as a manager node 
+        - By default, the manager nod generates a new root certificate anutorigty alson with a key pair, which 
+            ((come back to this section))
+
+    Describe MTLS 
+        - 
+
+    Describe Idenity Roles
+        - 
+    
+    Compare and Contrast UCP Works and managers 
+        - UCP agent service automatically starts serving all UCP components in manager node and only proxy service in worker node 
+    
+    Describe process to use external certificates with UCP and DTR
+        - UCP Use your own TLS Certificates 
+            - All UCP services are exposed using HTTPS to ensure all communicaes between clients and ICP are encrypted
+            - By default this is done using selsigned TLS certificatese that are not trusted by client tools like web browsers 
+            - To configure UCP to use your own TLS certificates and keys: 
+                1) loginx 
+                2) click certifficaes 
+                3) Upload certificaes and keys 
+                4) Click save 
+            - Afer replacing the TLS certificates, your users will not be able to authenticate with their old client certificate bunles
