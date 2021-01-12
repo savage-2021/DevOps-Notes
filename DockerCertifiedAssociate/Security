@@ -89,3 +89,53 @@ Describe default engine security
                 3) Upload certificaes and keys 
                 4) Click save 
             - Afer replacing the TLS certificates, your users will not be able to authenticate with their old client certificate bunles
+
+    Describe and demonstarate that an image passes a security scan
+        - Docker required a third party to scan, called Snyk 
+        - The $ docker scan $ command allows yo to scan existing Docker images using the image name or ID 
+            $ docker scan hello-world 
+        - You can get a more detailed scan report about a Docker image by providing the Dockerfile used to create the image:
+            $ docker scan --file Dockerfile docker-scan:e2e
+            -> You can exclude scanning the base image in this by doing --exclude-base tag 
+            --> Pass the --json flag to the command to get the output as json 
+            -> --group-issues can be used to dispaly each issue just once
+            --> --dependency-tree is used to show the dependency tree 
+            -> --severity=low/medium/high to show the diff severities 
+    
+    Demonstrate and Describe how to enable Docker Content Trust 
+        - Enable and disable conent trust per-shell or per-invocation 
+        - In a shall uyou can enable content trust by setting the DOCKER_CONTENT_TRUST environment variable
+        - Enableing per-shell is useful because you can have one shell configured for trusted operations and another terminal shell for 
+            untrusted operations
+        - You can also add this declaration to your shell profile to have it turned on always by default 
+        - export DOCKER_CONTENT_TRUST = 1
+    
+    Describe and demonstrate how to confiduge RBAC and UCP 
+        - UCP is now MKE (Mirantis Kuberneets Engine)
+        * Creating Roles
+            -> You can create kubernetes roles with throught the CLI using kubeclt or through the MKE web interface 
+            -> Thorught the UI 
+                1) Select Access Control
+                2) From the left nav menu, select Roles 
+                3) Selected Kubernetes tab at the top of the window 
+                4) Select Create to craete a kubernetes role object 
+                5) Seelect a namespace from the Naespace dropdown list. Selectig a specific namespace creates a role for use in 
+                    that namespace, but selecting all namespaces creates a clusterrole where you can create riles for a cluster scoped kubernetes resource
+                6) Provide the YAML for the role, either by entering it in the Object Yaml edirotr, or uploading
+                7) Then create for role creation 
+        * Creating Role Grants
+            - Two types of role grants 
+                1) CluterRoleBinding which applies to all namespaces 
+                2) RoleBinding which applies to a specific namespace 
+    
+    Integrate with LDAP Directory 
+        - Docker integrates wit LDAP so that you can manage users and groups from your organisations directory 
+        - I will automatically propagate that ingormation to UCP and DTR 
+        - If you enable LDAP, UCP uses a remote direcotry server to creates users automatically, and all logins are forwarded to the direcotyr server 
+        - When you switch from build in auth to LDAP auth, all manually created users whose names don't match any LDAP search results are still avaialble 
+        - 
+
+    Demonstrate Creation of Client Bundles 
+        - A clinet bundle is a group of certificates downloadable directly from the Docker Universal Control Plane user interface 
+            within the admin section for "My Profile". This allows you to authorise a remote Docker engine to a specifc user account managed in Docker
+            EE, absorbing all associated RBAC controls in the process. You can now execute docker swarm commands from 
