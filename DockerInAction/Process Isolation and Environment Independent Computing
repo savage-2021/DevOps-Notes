@@ -1,0 +1,15 @@
+- The most difficult part of learning how to apply containers is in translating the needs of the software you are tyring to isolate
+
+* Running Software in containers
+    - Docker calls the collection of files and instructions needed to run a program an image 
+    - $ docker run --detach --name web nginx:latest
+        -> Downloads, installss, and starts a drtached nginx container from Docker Hub
+    - Detached containers are a perfect fit for containers you want to run in the background, (like a daemon or a service)
+    - Iteractive containers
+        $ docker run --interactive --tty --link web:web --name web_test busybox /bin/sh
+        -> This starts a virtual terminal 
+            --interactive option tells Docker to keep the stanard input stream open for the container even if there is no 
+                terminal attached
+            --tty option tell sDocker to allocation a virtual terminal for the container, which will allow you to pass signals
+                to the terminal 
+            /bin/sh was used to specify the program to run inside the shell 
