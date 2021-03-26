@@ -1,0 +1,75 @@
+- An Operator is a way to package, raun, and maintain a Kubernetes application 
+- A kubernetes application is not only deployed on Kubernetes, it is designed to use and to operatte in concert wiht Kubernetes facilities and tools 
+- An operator builds on kubernetes abstracitnos 
+
+How Kubernetes Works 
+- Automates the life cycle of a stateless application 
+- Without state, any instances of an application are interchangeable 
+- Because its stateless, when one pod fils, kubernetes can replace it with anoteher 
+    -> Instances of applicatinos running on a cluster are known as a replica 
+- A Kubernetes cluster is a colleciton of computers, called nodes 
+- The basic unit of work, and of replication is a pod 
+- A pod is a group of one or more Linux containers with common resources like netowrking, storage, and access to shared memory 
+- A Kuberenets cluster can be divided into two planes.
+    -> The control plane: 
+        -> A collection of pods comprises the control plane and implements the Kubernetes API and orchestration logix 
+            -> Controllers of the control plane implement control loops that repeatedly compare the desired state of the cluster to the actual 
+                state 
+            -> When the two diverge, a controller takes action to make them match 
+            -> Operators extend this behaviour 
+        -> Appliaction/Data plane is everything else
+            -> It si the group of nodes where the applicaiton pods run, one or more nodes is usually dedicated to running applicaiots 
+
+Operators can blur the lines between planes
+
+Stateful is Hard
+    -> Most applications have state 
+    -> They have particulars of startup, component interdependence, and configuration 
+    -> Kubernetes cannot know all aboute very stateful, cpmlext clustered application, whilset also remaining general and simple 
+    -> 
+
+Operators are Software SREs 
+    -> SRE is a set of pattersna dn principles for running large systems 
+    -> Practitioners must interpret and apply SRE philoopy to particular circumstances 
+    -> An operator is like an automated SRE for its application 
+    -> An Operator can manage a cluster of database servers
+
+How Operators Work 
+    -> Operators work by etending the Kubernetes control plane and API in the simplest for 
+    -> An Operator adds an ednpoint to the Kubernetes API called a custom resource (CR), along wiht a control plane component 
+        that monitors and maintains resources of the new type 
+    -> This Operator can then take action based ont he resource's state 
+
+Kubernetes CRs 
+    -> CRs are the API extension mechanism in Kubernetes 
+    -> A custom resource definition 
+
+How Operators Are Made 
+- Kubernetes compares a set of resources to realisty; that is, the running state of a cluster 
+-> It takes actions to make realisty match the desired satet described by those resources 
+-> Operators extend that patter to specific applications on specifyc clusters 
+-> An Operator is a custom Kubernetes controller watching a CR type and taking applications peciic actions to make reality mathc the spec in that rresource 
+-> Making an Operator means creating a CRD and providing a program that runs in a loop wathcing CRs of that kind 
+    -> What the Operator does in response to changes in the CR is specific to the applicatino the main Operator manages 
+    -> 
+
+Example: The etcd Operator
+    - etcd is a distributed key-value sore (lightweight database clluster)
+    - An etcd cluster usually requires a smart admin who can add a new node, backup the cluster, upgrade the cluster 
+    - An etcd Operator knows how to perform those tasks. 
+    - An Operator knows about its appliactions internal state, and takes regular action to aligh that state with the desired state expressed in 
+        the specification of one or more custom resources 
+    
+The Case of the Missing Member 
+    -> Since the etcd Operator understands etcd's state, it can recover from an etcd cluster member's failure in the same way 
+        kubernetes replaced the deleted stateless web server pod in our earlier example 
+    -> Operators can replicate the state, something kuberetes can't do alone 
+        -> Adding a new member isn't as simple as adding a new pod 
+
+Who are Operators for? 
+    The Operator pattern arose in reponse to infrastructure engineers and developers wanted to extend Kubernetes to provice deatures specific to their sites and software 
+    Operators make it easier for cluster administracotrs to enable and developesr to use foundation software pieces like databsaes and storage systems with less manageemnt 
+    eg: If you want to use a killer new application, and this application has an operator. You can deploy the killer appliction without having to become an experit in administrating it 
+    Application Devlopers build Operators to manage the applications they are delivering, simplyfying the deployment and management experience on their customers kubernete's clusters 
+    infrastructure engineers creat operators to contorl deployed services ad systems 
+    Rook manages Ceph storage on Kubernetes clusters, which other operators provide on-cluster management of external storage services like S3 

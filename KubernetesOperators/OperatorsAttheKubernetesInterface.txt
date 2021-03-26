@@ -1,0 +1,12 @@
+Operators extend two kubernetes concepts: resources and Controllers
+The kubernetes API inslcudes a machanism, the CRD for defining new resources
+Kubernetes objects Operators build on to add new capabilities to a cluster 
+It will help you decide how Operators fit into the Kubernetes architecture and why it is valable to make an application a Kubernetes native
+
+Standard Scaling: The ReplicaSet Resource 
+-> Looking at a standard resource, the ReplicaSet gives a sense of hose resourecs comprise the applicaiton management database at the heart
+    of kubernetes
+-> Liek any other reosurece in the Kubernetes API the ReplicaSet is a collection of API objects 
+_> The ReplicaSet basically just collects pod objects, forming a list of running replicas of an application 
+-> IN standard kubernetes, a ReplicasSet controller manages replicasets and the pods belonging to them 
+    -> RS controllers creates Rs and monitors them 
